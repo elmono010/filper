@@ -170,10 +170,15 @@ app.get('/api/accounts', async (_req: Request, res: Response) => {
 
 // N8N Proxy (Fixes CORS)
 app.post('/api/n8n/proxy', async (req: Request, res: Response) => {
-    const { url, apiKey, method, body, endpoint } = req.body;
+    console.log('📬 N8N Proxy Request:', req.body);
+    const { url, apiKey, method, body, endpoint } = req.body || {};
     
     if (!url || !apiKey || !endpoint) {
-        return res.status(400).json({ error: 'Faltan parámetros: url, apiKey o endpoint' });
+        console.warn('⚠️ N8N Proxy: Missing parameters', { url: !!url, apiKey: !!apiKey, endpoint: !!endpoint });
+        return res.status(400).json({ 
+            error: 'Faltan parámetros requeridos', 
+            details: { url: !!url, apiKey: !!apiKey, endpoint: !!endpoint } 
+        });
     }
 
     try {

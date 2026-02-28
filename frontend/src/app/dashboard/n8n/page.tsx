@@ -39,16 +39,18 @@ export default function N8NPage() {
         }
         setTestStatus('testing');
         setMessage('Probando conexión...');
+        const payload = {
+            url: config.url,
+            apiKey: config.apiKey,
+            method: 'GET',
+            endpoint: 'workflows'
+        };
+        console.log('📤 Sending to N8N Proxy:', payload);
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/n8n/proxy`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    url: config.url,
-                    apiKey: config.apiKey,
-                    method: 'GET',
-                    endpoint: 'workflows'
-                })
+                body: JSON.stringify(payload)
             });
             
             if (res.ok) {
