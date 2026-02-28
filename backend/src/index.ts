@@ -13,45 +13,52 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'filper-super-secret-key';
 
-if (!process.env.DATABASE_URL) {
-    console.error('❌ FATAL ERROR: DATABASE_URL is not set in environment variables!');
-}
-
-// --- DATABASE SETUP (PRISMA 7 ADAPTER) ---
-const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
-    max: 20,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 2000,
-});
-
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
-
-// Connection check with error trap
-async function connectDb() {
-    try {
-        await prisma.$connect();
-        console.log('✅ Base de Datos conectada con éxito (Prisma 7 Adapter)');
-    } catch (error) {
-        console.error('❌ FATAL: No se pudo conectar a la base de datos:', error);
-        // No salimos del proceso aquí para permitir que los logs lleguen al panel
-    }
-}
-connectDb();
-
+// 1. CORS - FIRST THING (Ensures browsers get headers even if DB fails later)
 app.use(cors({
-    origin: (origin, callback) => {
-        // Allow all origins for now to solve the issue
-        callback(null, true);
-    },
+    origin: (origin, callback) => callback(null, true),
     credentials: true,
     optionsSuccessStatus: 200
 }));
+
+// Preflight handler explicit
+app.options('*', cors());
+
 app.use(express.json());
 
-// Interceptar todas las peticiones OPTIONS para asegurar que respondan con CORS
-app.options('*', cors());
+// 2. DIAGNOSTICS - LOG WHAT WE SEE
+console.log('--- SYSTEM DIAGNOSTICS ---');
+console.log('TIME:', new Date().toISOString());
+console.log('PORT:', PORT);
+if (process.env.DATABASE_URL) {
+    const obscured = process.env.DATABASE_URL.replace(/:([^@]+)@/, ':****@');
+    console.log('DATABASE_URL:', obscured);
+} else {
+    console.error('❌ FATAL: DATABASE_URL is EMPTY');
+}
+console.log('---------------------------');
+
+// 3. DATABASE SETUP (PRISMA 7 ADAPTER)
+let prisma: PrismaClient;
+
+try {
+    const pool = new pg.Pool({
+        connectionString: process.env.DATABASE_URL,
+        max: 5, // Ligeramente más bajo para evitar saturar en arranque
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 5000,
+    });
+
+    const adapter = new PrismaPg(pool);
+    prisma = new PrismaClient({ adapter });
+
+    // Connection test background
+    prisma.$connect()
+        .then(() => console.log('✅ Base de Datos: Conexión Exitosa'))
+        .catch(err => console.error('❌ Base de Datos: Fallo de Conexión:', err.message));
+
+} catch (e: any) {
+    console.error('❌ FATAL: Error crítico inicializando Prisma:', e.message);
+}
 
 // --- HELPERS ---
 const generateToken = (userId: string) => {
