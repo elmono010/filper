@@ -182,7 +182,14 @@ app.post('/api/n8n/proxy', async (req: Request, res: Response) => {
     }
 
     try {
-        const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+        let cleanUrl = url.trim();
+        if (!cleanUrl.startsWith('http')) {
+            cleanUrl = `https://${cleanUrl}`;
+        }
+        if (cleanUrl.endsWith('/')) {
+            cleanUrl = cleanUrl.slice(0, -1);
+        }
+        
         const targetUrl = `${cleanUrl}/api/v1/${endpoint}`;
         
         console.log(`📡 N8N Proxy: ${method || 'GET'} ${targetUrl}`);
