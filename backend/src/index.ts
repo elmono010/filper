@@ -23,6 +23,12 @@ const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'filper-super-secret-key';
 const ALLOWED_ORIGINS = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['*'];
 
+// 0. REQUEST LOGGER (VER SI LLEGAN PETICIONES) - ANTES DE CORS
+app.use((req, res, next) => {
+    console.log(`🔍 [${new Date().toISOString()}] ${req.method} ${req.url} - Origin: ${req.get('origin') || 'none'}`);
+    next();
+});
+
 // 1. CORS - ABSOLUTE PRIORITY
 app.use(cors({
     origin: (origin, callback) => {
@@ -151,6 +157,17 @@ app.post('/api/auth/login', async (req, res) => {
         console.error('❌ Error en login:', error.message);
         res.status(500).json({ error: 'Error en el servidor: ' + error.message });
     }
+});
+
+// 4. CATCH-ALL PARA DEBUGEAR 404s
+app.use((req, res) => {
+    console.warn(`🛑 404 INTERNO: ${req.method} ${req.url}`);
+    res.status(404).json({
+        error: 'Ruta no encontrada en el backend',
+        method: req.method,
+        path: req.url,
+        timestamp: new Date().toISOString()
+    });
 });
 
 // Start Server

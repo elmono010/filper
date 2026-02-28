@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "npx prisma generate && ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "rm -rf dist && npx prisma generate && tsc",
-    "start": "echo '--- CONTAINER STARTING ---' && node dist/index.js",
+    "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
