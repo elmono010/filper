@@ -21,10 +21,19 @@ process.on('unhandledRejection', (reason, promise) => {
 const app = express();
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'filper-super-secret-key';
+const ALLOWED_ORIGINS = process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['*'];
 
 // 1. CORS - ABSOLUTE PRIORITY
 app.use(cors({
-    origin: (origin, callback) => callback(null, true),
+    origin: (origin, callback) => {
+        // Permitir si no hay origin (como apps móviles o curl) o si está en la lista blanca
+        if (!origin || ALLOWED_ORIGINS.includes('*') || ALLOWED_ORIGINS.includes(origin)) {
+            callback(null, true);
+        } else {
+            console.warn(`🔒 CORS bloqueado para: ${origin}`);
+            callback(new Error('No permitido por CORS'));
+        }
+    },
     credentials: true,
     optionsSuccessStatus: 200
 }));
@@ -36,6 +45,7 @@ console.log('\n--- 🚀 FILPER SYSTEM STARTUP ---');
 console.log('TIME:', new Date().toISOString());
 console.log('PORT:', PORT);
 console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('CORS_ORIGIN:', process.env.CORS_ORIGIN || '(Default: *)');
 console.log('DATABASE_URL EXISTS:', !!process.env.DATABASE_URL);
 console.log('--------------------------------\n');
 
