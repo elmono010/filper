@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 
 dotenv.config();
 
@@ -13,11 +15,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'filper-super-secret-key';
 
 if (!process.env.DATABASE_URL) {
     console.error('❌ FATAL ERROR: DATABASE_URL is not set in environment variables!');
-} else {
-    console.log('✅ DATABASE_URL is present (starts with:', process.env.DATABASE_URL.substring(0, 15), '...)');
 }
 
-const prisma = new PrismaClient();
+const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 // Test connection
 async function testDb() {
