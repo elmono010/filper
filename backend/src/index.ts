@@ -168,6 +168,37 @@ app.get('/api/accounts', async (_req: Request, res: Response) => {
     }
 });
 
+// N8N Proxy (Fixes CORS)
+app.post('/api/n8n/proxy', async (req: Request, res: Response) => {
+    const { url, apiKey, method, body, endpoint } = req.body;
+    
+    if (!url || !apiKey || !endpoint) {
+        return res.status(400).json({ error: 'Faltan parámetros: url, apiKey o endpoint' });
+    }
+
+    try {
+        const cleanUrl = url.endsWith('/') ? url.slice(0, -1) : url;
+        const targetUrl = `${cleanUrl}/api/v1/${endpoint}`;
+        
+        console.log(`📡 N8N Proxy: ${method || 'GET'} ${targetUrl}`);
+
+        const response = await fetch(targetUrl, {
+            method: method || 'GET',
+            headers: {
+                'X-N8N-API-KEY': apiKey,
+                'Content-Type': 'application/json'
+            },
+            body: body ? JSON.stringify(body) : undefined
+        });
+
+        const data = await response.json();
+        return res.status(response.status).json(data);
+    } catch (e: any) {
+        console.error('❌ N8N Proxy Error:', e.message);
+        return res.status(500).json({ error: 'Fallo al conectar con N8N: ' + e.message });
+    }
+});
+
 // Catch-all 404
 app.use((req: Request, res: Response) => {
     res.status(404).json({ error: 'Ruta no encontrada', path: req.url });

@@ -40,15 +40,23 @@ export default function N8NPage() {
         setTestStatus('testing');
         setMessage('Probando conexión...');
         try {
-            const res = await fetch(`${config.url}/api/v1/workflows`, {
-                headers: { 'X-N8N-API-KEY': config.apiKey },
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/n8n/proxy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: config.url,
+                    apiKey: config.apiKey,
+                    method: 'GET',
+                    endpoint: 'workflows'
+                })
             });
+            
             if (res.ok) {
                 setTestStatus('ok');
                 setMessage('✅ Conexión exitosa con N8N.');
             } else {
                 setTestStatus('fail');
-                setMessage(`❌ Error ${res.status}: Verifica la URL y API Key.`);
+                setMessage(`❌ Error: Verifica la URL y API Key.`);
             }
         } catch {
             setTestStatus('fail');
@@ -76,13 +84,16 @@ export default function N8NPage() {
         setMessage('Actualizando credencial en N8N...');
 
         try {
-            const res = await fetch(`${config.url}/api/v1/credentials/${config.credentialId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-N8N-API-KEY': config.apiKey,
-                },
-                body: JSON.stringify({ data: parsedData }),
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/n8n/proxy`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: config.url,
+                    apiKey: config.apiKey,
+                    method: 'PATCH',
+                    endpoint: `credentials/${config.credentialId}`,
+                    body: { data: parsedData }
+                })
             });
 
             if (res.ok) {
@@ -92,11 +103,11 @@ export default function N8NPage() {
             } else {
                 const err = await res.json();
                 setStatus('error');
-                setMessage(`❌ Error: ${err.message || res.status}`);
+                setMessage(`❌ Error: ${err.error || 'Fallo en la actualización'}`);
             }
         } catch (e) {
             setStatus('error');
-            setMessage('❌ No se pudo conectar con N8N. Verifica CORS y la URL.');
+            setMessage('❌ No se pudo conectar con N8N a través del proxy.');
         }
     };
 
@@ -109,16 +120,23 @@ export default function N8NPage() {
         setStatus('loading');
         setMessage('Ejecutando workflow...');
         try {
-            const res = await fetch(`${config.url}/api/v1/workflows/${config.workflowId}/activate`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/n8n/proxy`, {
                 method: 'POST',
-                headers: { 'X-N8N-API-KEY': config.apiKey },
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: config.url,
+                    apiKey: config.apiKey,
+                    method: 'POST',
+                    endpoint: `workflows/${config.workflowId}/activate`
+                })
             });
+
             if (res.ok) {
                 setStatus('success');
                 setMessage('✅ Workflow activado correctamente.');
             } else {
                 setStatus('error');
-                setMessage(`❌ Error activando workflow: ${res.status}`);
+                setMessage(`❌ Error activando workflow.`);
             }
         } catch {
             setStatus('error');
