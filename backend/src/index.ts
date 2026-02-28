@@ -13,16 +13,17 @@ const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'filper-super-secret-key';
 
 app.use(cors({
-    origin: [
-        'https://silkroad-ao.xyz',
-        'https://filper.silkroad-ao.xyz',
-        'http://localhost:3000'
-    ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    origin: (origin, callback) => {
+        // Allow all origins for now to solve the issue
+        callback(null, true);
+    },
+    credentials: true,
+    optionsSuccessStatus: 200
 }));
 app.use(express.json());
+
+// Interceptar todas las peticiones OPTIONS para asegurar que respondan con CORS
+app.options('*', cors());
 
 // --- HELPERS ---
 const generateToken = (userId: string) => {
