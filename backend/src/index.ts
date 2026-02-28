@@ -147,6 +147,27 @@ app.post('/api/auth/login', async (req: Request, res: Response) => {
     }
 });
 
+// Stats
+app.get('/api/stats', (_req: Request, res: Response) => {
+    res.json({
+        accountsCount: 0,
+        scheduledVideos: 0,
+        postedVideos: 0,
+        newFollowers: '0'
+    });
+});
+
+// TikTok Accounts
+app.get('/api/accounts', async (_req: Request, res: Response) => {
+    if (!prisma) return res.status(503).json({ error: 'DB no disponible' });
+    try {
+        const accounts = await prisma.tikTokAccount.findMany();
+        res.json(accounts);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Catch-all 404
 app.use((req: Request, res: Response) => {
     res.status(404).json({ error: 'Ruta no encontrada', path: req.url });
