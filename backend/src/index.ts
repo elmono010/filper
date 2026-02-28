@@ -68,6 +68,10 @@ const generateToken = (userId: string) => {
 // --- ROUTES ---
 
 // Health Check
+app.get('/', (req, res) => {
+    res.send('<h1>FILPER API IS ONLINE 🚀</h1><p>Visit /health for status</p>');
+});
+
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', message: 'FILPER Backend decoupled is running' });
 });
@@ -136,6 +140,7 @@ app.get('/api/stats', async (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
-    console.log(`FILPER Backend running on port ${PORT}`);
+app.listen(Number(PORT), '0.0.0.0', () => {
+    console.log(`🚀 FILPER Backend READY on port ${PORT}`);
+    console.log(`🔗 URL: http://0.0.0.0:${PORT}`);
 });
