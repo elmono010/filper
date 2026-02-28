@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import * as dotenv from 'dotenv';
+import 'dotenv/config'; // Direct side-effect import is safer in ESM
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
@@ -8,10 +8,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import pkg from 'pg';
 const { Pool } = pkg;
 
-// Configurar dotenv
-dotenv.config();
-
-// Global crash handlers - CRITICAL to see why it fails in Logs
+// Global crash handlers
 process.on('uncaughtException', (err) => {
     console.error('💥 UNCAUGHT EXCEPTION:', err.message);
     console.error(err.stack);
@@ -25,7 +22,7 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'filper-super-secret-key';
 
-// 1. CORS - MUST BE FIRST
+// 1. CORS - ABSOLUTE PRIORITY
 app.use(cors({
     origin: (origin, callback) => callback(null, true),
     credentials: true,
@@ -34,33 +31,35 @@ app.use(cors({
 app.options('*', cors());
 app.use(express.json());
 
-// 2. DIAGNOSTICS
-console.log('--- SYSTEM STARTUP ---');
+// 2. STARTUP LOGS
+console.log('\n--- 🚀 FILPER SYSTEM STARTUP ---');
 console.log('TIME:', new Date().toISOString());
 console.log('PORT:', PORT);
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('DATABASE_URL EXISTS:', !!process.env.DATABASE_URL);
-console.log('---------------------------');
+console.log('--------------------------------\n');
 
-// 3. DATABASE (PRISMA 7 ADAPTER)
-let prisma: PrismaClient;
+// 3. DATABASE (PRISMA 7 ADAPTER) - LAZY INIT
+let prisma: PrismaClient | null = null;
 
 try {
-    const pool = new Pool({
-        connectionString: process.env.DATABASE_URL,
-        max: 5,
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 5000,
-    });
+    if (process.env.DATABASE_URL) {
+        const pool = new Pool({
+            connectionString: process.env.DATABASE_URL,
+            max: 5,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 5000,
+        });
 
-    const adapter = new PrismaPg(pool);
-    prisma = new PrismaClient({ adapter });
+        const adapter = new PrismaPg(pool);
+        prisma = new PrismaClient({ adapter });
 
-    // Background connect
-    prisma.$connect()
-        .then(() => console.log('✅ Base de Datos: CONECTADA'))
-        .catch(err => console.error('❌ Base de Datos: ERROR DE CONEXIÓN:', err.message));
-
+        prisma.$connect()
+            .then(() => console.log('✅ Base de Datos: CONECTADA'))
+            .catch(err => console.error('❌ Base de Datos: ERROR DE CONEXIÓN:', err.message));
+    } else {
+        console.error('⚠️ WARN: No DATABASE_URL found. API will run but DB calls will fail.');
+    }
 } catch (e: any) {
     console.error('❌ FATAL: Error inicializando Prisma:', e.message);
 }
@@ -72,22 +71,26 @@ const generateToken = (userId: string) => {
 
 // --- ROUTES ---
 
-// Health Check & Welcome (Para probar en el navegador directamente)
 app.get('/', (req, res) => {
     res.send(`
-        <div style="font-family: sans-serif; text-align: center; padding: 50px;">
-            <h1>🚀 FILPER API IS ONLINE</h1>
-            <p>El backend está respondiendo correctamente.</p>
-            <p><strong>Puerto:</strong> ${PORT}</p>
-            <p><strong>Estado DB:</strong> Ver logs del servidor</p>
-            <hr/>
-            <p>Si ves esto, el CORS ya no debería dar problemas.</p>
+        <div style="font-family: sans-serif; text-align: center; padding: 50px; background: #0f172a; color: white; min-height: 100vh;">
+            <h1 style="color: #38bdf8;">🚀 FILPER API IS ONLINE</h1>
+            <p>El backend está respondiendo correctamente en el puerto ${PORT}.</p>
+            <div style="background: #1e293b; padding: 20px; border-radius: 8px; display: inline-block; margin-top: 20px;">
+                <p><strong>Status:</strong> Operacional</p>
+                <p><strong>Endpoint:</strong> api.silkroad-ao.xyz</p>
+            </div>
+            <p style="margin-top: 20px; opacity: 0.7;">Si ves esto, el CORS ya no es un problema.</p>
         </div>
     `);
 });
 
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', uptime: process.uptime() });
+    res.json({
+        status: 'ok',
+        uptime: process.uptime(),
+        dbConnected: !!prisma
+    });
 });
 
 // Auth: Register
@@ -138,26 +141,6 @@ app.post('/api/auth/login', async (req, res) => {
         console.error('❌ Error en login:', error.message);
         res.status(500).json({ error: 'Error en el servidor: ' + error.message });
     }
-});
-
-// TikTok: Get Accounts
-app.get('/api/accounts', async (req, res) => {
-    try {
-        const accounts = await prisma.tikTokAccount.findMany();
-        res.json(accounts);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener cuentas' });
-    }
-});
-
-// Dashboard Stats
-app.get('/api/stats', async (req, res) => {
-    res.json({
-        accountsCount: 5,
-        scheduledVideos: 128,
-        postedVideos: 1042,
-        newFollowers: '12.5k'
-    });
 });
 
 // Start Server
