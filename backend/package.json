@@ -4,6 +4,9 @@
   "type": "module",
   "description": "",
   "main": "dist/index.js",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
     "build": "npx prisma generate && tsc",
