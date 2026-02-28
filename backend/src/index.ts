@@ -170,14 +170,23 @@ app.get('/api/accounts', async (_req: Request, res: Response) => {
 
 // N8N Proxy (Fixes CORS)
 app.post('/api/n8n/proxy', async (req: Request, res: Response) => {
-    console.log('📬 N8N Proxy Request:', req.body);
-    const { url, apiKey, method, body, endpoint } = req.body || {};
+    console.log('--- 🛡️ N8N PROXY DEBUG ---');
+    console.log('Headers:', req.headers);
+    console.log('Body:', req.body);
+    
+    const body = req.body || {};
+    const url = body.url;
+    const apiKey = body.apiKey;
+    const endpoint = body.endpoint;
+    const method = body.method;
+    const dataToSend = body.body;
     
     if (!url || !apiKey || !endpoint) {
-        console.warn('⚠️ N8N Proxy: Missing parameters', { url: !!url, apiKey: !!apiKey, endpoint: !!endpoint });
+        console.warn('❌ Missing:', { url: !!url, apiKey: !!apiKey, endpoint: !!endpoint });
         return res.status(400).json({ 
             error: 'Faltan parámetros requeridos', 
-            details: { url: !!url, apiKey: !!apiKey, endpoint: !!endpoint } 
+            received: { url: !!url, apiKey: !!apiKey, endpoint: !!endpoint },
+            debug_body: req.body 
         });
     }
 
@@ -200,7 +209,7 @@ app.post('/api/n8n/proxy', async (req: Request, res: Response) => {
                 'X-N8N-API-KEY': apiKey,
                 'Content-Type': 'application/json'
             },
-            body: body ? JSON.stringify(body) : undefined
+            body: dataToSend ? JSON.stringify(dataToSend) : undefined
         });
 
         const data = await response.json();
