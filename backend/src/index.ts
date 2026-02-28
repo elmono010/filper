@@ -12,7 +12,16 @@ const prisma = new PrismaClient();
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'filper-super-secret-key';
 
-app.use(cors());
+app.use(cors({
+    origin: [
+        'https://silkroad-ao.xyz',
+        'https://filper.silkroad-ao.xyz',
+        'http://localhost:3000'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 app.use(express.json());
 
 // --- HELPERS ---
