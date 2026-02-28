@@ -11,7 +11,24 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'filper-super-secret-key';
 
+if (!process.env.DATABASE_URL) {
+    console.error('❌ FATAL ERROR: DATABASE_URL is not set in environment variables!');
+} else {
+    console.log('✅ DATABASE_URL is present (starts with:', process.env.DATABASE_URL.substring(0, 15), '...)');
+}
+
 const prisma = new PrismaClient();
+
+// Test connection
+async function testDb() {
+    try {
+        await prisma.$connect();
+        console.log('✅ Base de datos conectada correctamente');
+    } catch (err) {
+        console.error('❌ Error crítico de conexión a la base de datos:', err);
+    }
+}
+testDb();
 
 app.use(cors({
     origin: (origin, callback) => {
