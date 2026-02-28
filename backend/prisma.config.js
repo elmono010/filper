@@ -1,3 +1,4 @@
+// Reemplazado a .js para evitar errores de IDE con el entorno de TS
 import { defineConfig } from "@prisma/config";
 
 export default defineConfig({

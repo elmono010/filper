@@ -17,20 +17,28 @@ if (!process.env.DATABASE_URL) {
     console.error('❌ FATAL ERROR: DATABASE_URL is not set in environment variables!');
 }
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+// --- DATABASE SETUP (PRISMA 7 ADAPTER) ---
+const pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+});
+
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-// Test connection
-async function testDb() {
+// Connection check with error trap
+async function connectDb() {
     try {
         await prisma.$connect();
-        console.log('✅ Base de datos conectada correctamente');
-    } catch (err) {
-        console.error('❌ Error crítico de conexión a la base de datos:', err);
+        console.log('✅ Base de Datos conectada con éxito (Prisma 7 Adapter)');
+    } catch (error) {
+        console.error('❌ FATAL: No se pudo conectar a la base de datos:', error);
+        // No salimos del proceso aquí para permitir que los logs lleguen al panel
     }
 }
-testDb();
+connectDb();
 
 app.use(cors({
     origin: (origin, callback) => {
