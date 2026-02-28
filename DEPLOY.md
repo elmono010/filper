@@ -18,6 +18,7 @@ En tu panel de dominio (`silkroad-ao.xyz`), crea estos registros:
    - Build Path: `/backend`
 2. **Variables de Entorno (Environment)**:
    - `DATABASE_URL`: `postgresql://postgres:Elmono... @filper-filperdb-2hzw43:5432/filper-db`
+   - `CORS_ORIGIN`: `https://silkroad-ao.xyz,https://www.silkroad-ao.xyz` (O usa `*` para permitir todo)
    - `PORT`: `4000`
    - `JWT_SECRET`: (Tu clave secreta)
    - `NIXPACKS_NODE_VERSION`: `20`

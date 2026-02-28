@@ -18,6 +18,7 @@ Entiendo perfectamente la frustración. Vamos a hacer **borrón y cuenta nueva**
     *   Build Path: `/backend`  (¡Importante!)
 2.  **Variables de Entorno (Environment)**:
     *   `DATABASE_URL`: `postgresql://postgres:Elmono4823523103765506415031997Medellin55@filper-filperdb-2hzw43:5432/filper-db`
+    *   `CORS_ORIGIN`: `https://silkroad-ao.xyz,https://www.silkroad-ao.xyz` (O usa `*` para permitir todo)
     *   `PORT`: `4000`
     *   `JWT_SECRET`: `b7d8f92e4a1c6b5d3f0e872a9c4b1d6f5a3e0b82d4c9f1a7b6e5d3c0a2f4e8b1`
     *   `NIXPACKS_NODE_VERSION`: `20`
