@@ -8,9 +8,22 @@ import { PrismaClient } from '@prisma/client';
 dotenv.config();
 
 const app = express();
-const prisma = new PrismaClient();
 const PORT = process.env.PORT || 4000;
 const JWT_SECRET = process.env.JWT_SECRET || 'filper-super-secret-key';
+
+if (!process.env.DATABASE_URL) {
+    console.error('❌ FATAL: DATABASE_URL is not defined in environment variables');
+}
+
+let prisma: PrismaClient;
+
+try {
+    prisma = new PrismaClient();
+    console.log('✅ Prisma Client initialized');
+} catch (error) {
+    console.error('❌ Prisma Client failed to initialize:', error);
+    process.exit(1);
+}
 
 app.use(cors({
     origin: (origin, callback) => {
