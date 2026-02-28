@@ -8,15 +8,14 @@
     ],
     "sourceMap": true,
     "outDir": "./dist",
-    "rootDir": "./",
+    "rootDir": "./src",
     "strict": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "src/**/*",
-    "*.ts"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules"
