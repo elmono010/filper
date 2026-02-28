@@ -1,6 +1,8 @@
 node_modules
-dist
 .env
-*.map
-*.d.ts
-ts-node-dev
+*.md
+.git
+.gitignore
+test-db.js
+health.js
+# IMPORTANTE: NO ignorar dist aqui - docker lo compila desde 0

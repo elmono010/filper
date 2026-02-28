@@ -1,43 +1,45 @@
-FROM node:20-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
+# ==============================
+# Etapa 1: Instalar dependencias
+# ==============================
+FROM node:20-alpine AS deps
 WORKDIR /app
-
-# Install dependencies
+# Solo copiamos package files para cache de dependencias
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --include=dev
 
-# Rebuild the source code only when needed
-FROM base AS builder
+# ==============================
+# Etapa 2: Build (compilar TypeScript)
+# ==============================
+FROM node:20-alpine AS builder
 WORKDIR /app
+# Copiar dependencias instaladas
 COPY --from=deps /app/node_modules ./node_modules
+# Copiar código fuente (SIN dist/ porque está en .dockerignore)
 COPY . .
-
+# Generar Prisma Client y compilar TypeScript desde 0
 RUN npx prisma generate
-RUN npm run build
+RUN npx tsc --noEmit false --outDir dist
+# Verificar que se compiló correctamente
+RUN ls -la dist/ && echo "✅ Build OK"
 
-# Production image, copy all the files and run next
-FROM base AS runner
+# ==============================
+# Etapa 3: Imagen de producción
+# ==============================
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
+ENV PORT=4000
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nodejs
-
+# Copiar solo lo necesario del builder
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/prisma.config.js ./prisma.config.js
-COPY --from=builder /app/health.js ./health.js
 
-USER nodejs
+# Verificar que el entry point existe
+RUN ls -la dist/index.js && echo "✅ Entry point found"
 
 EXPOSE 4000
 
-ENV PORT 4000
-
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]
